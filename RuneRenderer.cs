@@ -58,10 +58,14 @@ public class RuneRenderer
 
             var showValues = settings.ShowRewardValues.Value;
 
+            // Too many runes preloaded at once isn't a real encounter (e.g. a town/hub that preloads the
+            // whole rune set), so just keep the socket count and drop the meaningless rune list.
+            var hideRuneList = settings.MaxRunesBeforeHiding.Value > 0 && runes.Count > settings.MaxRunesBeforeHiding.Value;
+
             // If a remnant is present but no rune was detected in preloads, assume Moon (the one rune
             // with no unique fx preload). Opt-in, since a not-yet-streamed rune could also look "empty".
-            var runesToShow = runes;
-            if (settings.AssumeMoonRune.Value && socketCounts.Count > 0 && plugin.MoonRune != null &&
+            List<DetectedRune> runesToShow = hideRuneList ? [] : runes;
+            if (!hideRuneList && settings.AssumeMoonRune.Value && socketCounts.Count > 0 && plugin.MoonRune != null &&
                 !runes.Any(r => !r.IsUnknown))
             {
                 runesToShow = [..runes, plugin.MoonRune];

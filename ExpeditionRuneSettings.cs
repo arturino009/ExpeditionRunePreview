@@ -31,6 +31,9 @@ public class ExpeditionRuneSettings : ISettings
     [Menu("Max rewards per rune", "Limit how many reward lines are shown under each rune. 0 = show all.")]
     public RangeNode<int> MaxRecipesPerRune { get; set; } = new(0, 0, 60);
 
+    [Menu("Hide rune list above N runes", "If more than this many runes are detected in the preloads at once (e.g. a town/hub that preloads every rune, not a real encounter), hide the rune list and show only the socket count. 0 = never hide.")]
+    public RangeNode<int> MaxRunesBeforeHiding { get; set; } = new(10, 0, 50);
+
     [Menu("Draw X offset", "Horizontal offset of the overlay panel.")]
     public RangeNode<int> DrawXOffset { get; set; } = new(0, -2000, 2000);
 
