@@ -58,7 +58,16 @@ public class RuneRenderer
 
             var showValues = settings.ShowRewardValues.Value;
 
-            foreach (var rune in runes)
+            // If a remnant is present but no rune was detected in preloads, assume Moon (the one rune
+            // with no unique fx preload). Opt-in, since a not-yet-streamed rune could also look "empty".
+            var runesToShow = runes;
+            if (settings.AssumeMoonRune.Value && socketCounts.Count > 0 && plugin.MoonRune != null &&
+                !runes.Any(r => !r.IsUnknown))
+            {
+                runesToShow = [..runes, plugin.MoonRune];
+            }
+
+            foreach (var rune in runesToShow)
             {
                 // Collapse to one line per reward (cheapest rune count), after optionally filtering to
                 // recipes craftable at this socket count, then attach each reward's NinjaPricer value.
@@ -80,9 +89,10 @@ public class RuneRenderer
                 var headerColor = rune.IsUnknown ? settings.UnknownRuneColor.Value
                     : rune.IsRare ? settings.RareRuneNameColor.Value
                     : settings.RuneNameColor.Value;
+                var suffix = rune.IsInferred ? " (assumed)" : "";
                 var header = rune.IsUnknown
                     ? $"Unknown rune: {rune.Name}"
-                    : rune.IsRare ? $"Rare {rune.Name}  ({rewards.Count})" : $"{rune.Name}  ({rewards.Count})";
+                    : rune.IsRare ? $"Rare {rune.Name}{suffix}  ({rewards.Count})" : $"{rune.Name}{suffix}  ({rewards.Count})";
                 var headerLine = graphics.DrawText(header, drawPoint, headerColor, FontAlign.Right);
                 drawnTextVector.Add(headerLine);
                 drawPoint.Y += headerLine.Y;

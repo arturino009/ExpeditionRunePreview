@@ -19,6 +19,9 @@ public class ExpeditionRuneSettings : ISettings
     [Menu("Show unknown runes", "Show a line for any rune .pet preload that could not be matched to a known rune (so its alias can be added).")]
     public ToggleNode ShowUnknownRunes { get; set; } = new(true);
 
+    [Menu("Assume Moon rune when none detected", "If a remnant is present but no rune is found in preloads, assume it's the Moon rune (Moon has no unique fx preload). Note: a non-Moon rune that simply hasn't streamed in yet (you're far from the remnant) can be mislabelled until you get closer.")]
+    public ToggleNode AssumeMoonRune { get; set; } = new(true);
+
     [Menu("Filter rewards by socket count", "Only show rewards craftable at this encounter, i.e. whose recipe needs no more runes than the remnant has sockets. Off = show every reward each rune can contribute to.")]
     public ToggleNode FilterBySocketCount { get; set; } = new(true);
 

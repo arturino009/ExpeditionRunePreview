@@ -18,6 +18,9 @@ public class ExpeditionRunePreview : BaseSettingsPlugin<ExpeditionRuneSettings>
     // StateMachine "sockets" state is the number of runes the encounter has.
     private const string EncounterPath = "Metadata/MiscellaneousObjects/Expedition2/Expedition2Encounter";
 
+    // Moon is the one rune with no unique fx preload, so a remnant with no detected rune is assumed Moon.
+    private const string MoonRuneKey = "RemnantRuneMoon";
+
     // Splits "Exalted Orb x2" into the base name and a stack quantity.
     private static readonly Regex RewardQtyRegex = new(@"^(.*?)\s+x(\d+)$", RegexOptions.Compiled);
 
@@ -30,6 +33,10 @@ public class ExpeditionRunePreview : BaseSettingsPlugin<ExpeditionRuneSettings>
 
     // Reward values (in Exalted Orbs) read straight from NinjaPricer's on-disk poe.ninja cache.
     private readonly PriceProvider _prices = new();
+
+    // Prebuilt Moon rune entry, shown when a remnant is present but no rune was detected (opt-in).
+    private DetectedRune _moonRune;
+    public DetectedRune MoonRune => _moonRune;
 
     public List<DetectedRune> Detected = [];
 
@@ -58,6 +65,7 @@ public class ExpeditionRunePreview : BaseSettingsPlugin<ExpeditionRuneSettings>
             () => Settings.ShowUnknownRunes.Value,
             Locker);
         _renderer = new RuneRenderer();
+        RebuildMoonRune();
 
         GameController.LeftPanel.WantUse(() => Settings.Enable);
 
@@ -72,6 +80,11 @@ public class ExpeditionRunePreview : BaseSettingsPlugin<ExpeditionRuneSettings>
     {
         if (_runeData.Load(RecipeDataPath))
             LogMessage($"{nameof(ExpeditionRunePreview)}: loaded {_runeData.RecipeCount} rune recipes.");
+    }
+
+    private void RebuildMoonRune()
+    {
+        _moonRune = _scanner?.BuildRune(MoonRuneKey, inferred: true);
     }
 
     public override void AreaChange(AreaInstance area)
@@ -215,6 +228,7 @@ public class ExpeditionRunePreview : BaseSettingsPlugin<ExpeditionRuneSettings>
         if (ImGui.Button("Reload rune data"))
         {
             LoadRuneData();
+            RebuildMoonRune();
             AreaChange(GameController.Area.CurrentArea);
         }
 

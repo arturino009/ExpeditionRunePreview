@@ -19,6 +19,9 @@ public class DetectedRune
     public List<RewardOption> Rewards { get; init; } = [];
     public bool IsUnknown { get; init; }
     public bool IsRare { get; init; }
+
+    // True when the rune wasn't found in preloads but inferred (e.g. Moon, which has no fx preload).
+    public bool IsInferred { get; init; }
 }
 
 public class RuneScanner(RuneData runeData, Action<List<DetectedRune>> setResult, Func<bool> showUnknown, object locker)
@@ -110,28 +113,7 @@ public class RuneScanner(RuneData runeData, Action<List<DetectedRune>> setResult
         var result = new List<DetectedRune>();
 
         foreach (var runeKey in found.Keys.OrderBy(runeData.DisplayName, StringComparer.OrdinalIgnoreCase))
-        {
-            var isRare = RuneData.IsRare(runeKey);
-            var recipes = runeData.RecipesFor(runeKey);
-
-            // Every (reward, rune-count) pair this rune can contribute to, including recipes that also
-            // need rare runes: the remnant only inscribes this rune, the player supplies the rest, so a
-            // rare-requiring recipe is still achievable. Kept un-collapsed so the renderer can filter by
-            // the encounter's socket count; it collapses duplicates itself.
-            var rewards = recipes
-                .Select(r => new RewardOption(r.Reward, r.Runes.Count))
-                .Distinct()
-                .OrderBy(x => x.RuneCount)
-                .ThenBy(x => x.Reward, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            result.Add(new DetectedRune
-            {
-                Name = runeData.DisplayName(runeKey),
-                Rewards = rewards,
-                IsRare = isRare,
-            });
-        }
+            result.Add(BuildRune(runeKey));
 
         if (showUnknown())
         {
@@ -146,5 +128,28 @@ public class RuneScanner(RuneData runeData, Action<List<DetectedRune>> setResult
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Build a <see cref="DetectedRune"/> for a single rune key with all the rewards it can contribute
+    /// to (rare-requiring recipes included; the renderer filters by socket count). Used both for
+    /// preload-detected runes and for the inferred Moon rune.
+    /// </summary>
+    public DetectedRune BuildRune(string runeKey, bool inferred = false)
+    {
+        var rewards = runeData.RecipesFor(runeKey)
+            .Select(r => new RewardOption(r.Reward, r.Runes.Count))
+            .Distinct()
+            .OrderBy(x => x.RuneCount)
+            .ThenBy(x => x.Reward, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return new DetectedRune
+        {
+            Name = runeData.DisplayName(runeKey),
+            Rewards = rewards,
+            IsRare = RuneData.IsRare(runeKey),
+            IsInferred = inferred,
+        };
     }
 }
